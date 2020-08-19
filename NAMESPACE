@@ -1,4 +1,5 @@
 importFrom("stats", "na.omit")
 importFrom("utils", "capture.output", "str", "unzip", "zip", "installed.packages", "packageDescription")
 import(httr)
+import(RestRserve)
 export(compose, push, auth, composeFromSource, pushFromSource)
