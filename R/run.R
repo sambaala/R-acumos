@@ -83,6 +83,7 @@ compose <- function(predict, transform, fit, generate, service, initialize, aux=
   saveRDS(comp, file=file.path(dir, "component.bin"))
   writeLines(jsonlite::toJSON(meta, auto_unbox=TRUE), file.path(dir, "meta.json"))
   writeLines(proto, file.path(dir, "component.proto"))
+  make_swagger_json(dir)
   ## -j ignores paths (is it portable in Widnows?)
   if (file.exists(file) && unlink(file)) stop("target file already exists and cannot be removed")
   zip(file, c(file.path(dir, "component.bin"), file.path(dir, "meta.json"), file.path(dir, "component.proto")), extras="-j")
