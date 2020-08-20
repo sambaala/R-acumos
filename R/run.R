@@ -52,7 +52,7 @@ compose <- function(predict, transform, fit, generate, service, initialize, aux=
                methods=list()
   )
   comp <- list(aux = aux, packages = loadedNamespaces())
-  proto <- 'syntax = "proto2";\n'
+  proto <- 'syntax = "proto2";\n\nimport "google/api/annotations.proto";\n'
   if (!missing(predict)) {
     comp$predict <- predict
     sig <- fetch.types(predict)
@@ -110,7 +110,14 @@ protoDefine <- function(name, types) {
 }
 
 protoService <- function(name, inputType = paste0(name, "Input"), outputType = paste0(name, "Output"))
-  paste0("service ", name, "_service {\n\trpc ", name, " (", inputType, ") returns (", outputType, ");\n}\n\n")
+  paste0('service ', name, '_service {\n\trpc ', name, ' (', inputType, ') returns (', outputType, '){',
+		'\n\t\toption (google.api.http) = {',
+		'\n\t\t\tpost: "/',name,'"',
+		'\n\t\t\tbody: "*"',
+		'\n\t\t};',
+	'\n\t}',
+	'\n}',
+	'\n\n')
 
 .dinfo <- function(level, ..., exp) {
   cd <- Sys.getenv("ACUMOS_DEBUG")
