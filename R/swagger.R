@@ -17,14 +17,14 @@ make_swagger_json = function(componentDir) {
   wd<-getwd()
   setwd(componentDir)
   file.copy(from = system.file("swagger","Makefile", package = "acumos"), to = ".")
-  if (system('make -q ') == 0L){
+  on.exit({
     setwd(wd)
     file.remove("Makefile")
+  })
+  if (system('make -q ') == 0L){
     return(FALSE)
   }
   if (system('make ') != 0){
-    setwd(wd)
-    file.remove("Makefile")
     stop('Failed to run Makefile')
   }
   setwd(wd)
