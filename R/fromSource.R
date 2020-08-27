@@ -19,6 +19,7 @@
 #' 
 #' @param file string, name of component source file (an R script)
 #' @param name 	string, name of the component
+#' @param componentVersion 	string, version of the component
 #' @param outputfile string, filename for the resulting component file
 #' @param addSource boolean, to add source file to the (ZIP) bundle or not
 #'
@@ -50,7 +51,7 @@
 #' 
 #' @export 
 composeFromSource<-function(file="acumos.R", 
-                          name = "R Component", outputfile = "component.zip", addSource=T){
+                          name = "R Component", componentVersion="unknown version", outputfile = "component.zip", addSource=T){
   comp<-new.env()
   exprs <- parse(file)
   tryCatch(
