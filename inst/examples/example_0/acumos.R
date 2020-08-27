@@ -35,5 +35,7 @@ acumos_predict <- function(..., inputs=c(
 )
 , outputs=c(predictedSpecies="character")
 ){
-  as.character(predict(rf, as.data.frame(list(...))))
+  res<-list(as.character(predict(rf, as.data.frame(list(...)))))
+  names(res)<-"predictedSpecies"
+  res
 } 
