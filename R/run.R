@@ -42,7 +42,7 @@ fetch.types <- function(f, default.in=c(x="character"), default.out=c(x="charact
 }
 
 ## compose a component
-compose <- function(predict, transform, fit, generate, service, initialize, aux=list(), name="R Component", file="component.amc") {
+compose <- function(predict, transform, fit, generate, service, initialize, aux=list(), name="R Component", componentVersion="unknown version", file="component.amc") {
   dir <- tempfile("acumos-component")
   if (!all(dir.create(dir))) stop("unable to create demporary directory in `",dir,"' to assemble the component bundle")
   
@@ -52,7 +52,7 @@ compose <- function(predict, transform, fit, generate, service, initialize, aux=
                methods=list()
   )
   comp <- list(aux = aux, packages = loadedNamespaces())
-  proto <- 'syntax = "proto2";\n\nimport "google/api/annotations.proto";\n'
+  proto <- 'syntax = "proto2";\n'
   if (!missing(predict)) {
     comp$predict <- predict
     sig <- fetch.types(predict)
@@ -83,10 +83,17 @@ compose <- function(predict, transform, fit, generate, service, initialize, aux=
   saveRDS(comp, file=file.path(dir, "component.bin"))
   writeLines(jsonlite::toJSON(meta, auto_unbox=TRUE), file.path(dir, "meta.json"))
   writeLines(proto, file.path(dir, "component.proto"))
-  make_swagger_json(dir)
+  yaml::write_yaml(swaggerYaml(predict, transform, fit, name, componentVersion), file.path(dir, "component.swagger.yaml"), 
+                   handlers = list(
+                     logical = function(x) {
+                       result <- ifelse(x, "true", "false")
+                       class(result) <- "verbatim"
+                       return(result)
+                     }
+                   ))
   ## -j ignores paths (is it portable in Widnows?)
   if (file.exists(file) && unlink(file)) stop("target file already exists and cannot be removed")
-  zip(file, c(file.path(dir, "component.bin"), file.path(dir, "meta.json"), file.path(dir, "component.proto")), extras="-j")
+  zip(file, c(file.path(dir, "component.bin"), file.path(dir, "meta.json"), file.path(dir, "component.proto"), file.path(dir, "component.swagger.yaml")), extras="-j")
   unlink(dir, TRUE)
   invisible(meta)
 }
@@ -98,7 +105,13 @@ type2proto <- function(x) sapply(x, function(o) {
          numeric = "double",
          raw = "bytes",
          stop("unsupported type ", o)) })
-
+type2swagger <- function(x) sapply(x, function(o) {
+  switch(o,
+         character = "string",
+         integer = "integer",
+         numeric = "number",
+         raw = "string",
+         stop("unsupported type ", o)) })
 ## proto has a more restricted definiton of identifiers so we have to work around that
 ## by introducing a special quoting scheme
 pQ <- function(x) gsub(".", "_o", gsub("_", "_X", x, fixed=TRUE), fixed=TRUE)
@@ -110,15 +123,11 @@ protoDefine <- function(name, types) {
          "\n}\n")
 }
 
-protoService <- function(name, inputType = paste0(name, "Input"), outputType = paste0(name, "Output"))
-  paste0('service ', name, '_service {\n\trpc ', name, ' (', inputType, ') returns (', outputType, '){',
-		'\n\t\toption (google.api.http) = {',
-		'\n\t\t\tpost: "/',name,'"',
-		'\n\t\t\tbody: "*"',
-		'\n\t\t};',
-	'\n\t}',
-	'\n}',
-	'\n\n')
+protoDefine <- function(name, types) {
+  paste0("message ", name, " {\n",
+         paste0("\trepeated ", type2proto(types), " ", pQ(names(types)), " = ", seq.int(types), ";", collapse="\n"),
+         "\n}\n")
+}
 
 .dinfo <- function(level, ..., exp) {
   cd <- Sys.getenv("ACUMOS_DEBUG")
@@ -144,6 +153,7 @@ run <- function(where=getwd(), file="component.amc", runtime="runtime.json", ini
   metadata <- file.path(dir, "meta.json")
   payload <- file.path(dir, "component.bin")
   proto <- file.path(dir, "component.proto")
+  swagger<-file.path(dir,"component.swagger.yaml")
   c.files <- c(metadata, payload, proto)
   ok <- file.exists(c.files)
   if (!all(ok)) stop(paste0("invalid archive (missing ",
@@ -178,15 +188,16 @@ run <- function(where=getwd(), file="component.amc", runtime="runtime.json", ini
     .dinfo(1L, "INFO: starting HTTP server on port ", rt$input_port)
     app = Application$new(middleware = list())
     encode_decode_middleware = EncodeDecodeMiddleware$new()
-    encode_decode_middleware$ContentHandlers$set_decode("application/octet-stream", identity)
-    encode_decode_middleware$ContentHandlers$set_encode("application/octet-stream", identity)
+    encode_decode_middleware$ContentHandlers$set_decode("application/vnd.google.protobuf", identity)
+    encode_decode_middleware$ContentHandlers$set_encode("application/vnd.google.protobuf", identity)
     app$append_middleware(encode_decode_middleware)
     if (is.function(.GlobalEnv$comp$predict)) app$add_post(path = "/predict", FUN = req_handler)
     if (is.function(.GlobalEnv$comp$transform)) app$add_post(path = "/transform", FUN = req_handler)
     if (is.function(.GlobalEnv$comp$fit)) app$add_post(path = "/fit", FUN = req_handler)
-    swaggerjsonfile<-system.file("examples","example_0","component.swagger.json", package = "acumos")
-    app$add_openapi(path = "/swagger.json", file_path = swaggerjsonfile)
-    app$add_swagger_ui(path = "/doc", path_openapi = "/swagger.json", use_cdn = FALSE)
+    if(file.exists(swagger)){
+      app$add_openapi(path = "/swagger.yaml", file_path = swagger)
+      app$add_swagger_ui(path = "/", path_openapi = "/swagger.yaml", use_cdn = TRUE)
+    }
     backend = BackendRserve$new()
     wd<-getwd()
     on.exit(setwd(wd))
@@ -257,29 +268,54 @@ req_handler <- function(request,response){ #path, query, body, headers) {
   if (!is.function(fn)) return(paste0("ERROR: this component doesn't support ", fn.type, "()"))
   if (is.null(fn.meta$input)) return(paste0("ERROR: ", fn.type, "() schema is missing input type specification"))
   tryCatch({
-    switch (request$content_type,
-      "application/octet-stream" = {
-        res <- do.call(fn, msg2data(request$body, fn.meta$input))
-        if (!is.null(res) && !is.null(fn.meta$output)) {
-          msg <- data2msg(res, fn.meta$output)
-          for (url in runtime$output_url)
-            send.msg(url, msg)
-          if (isTRUE(runtime$data_response)){
+    if(request$content_type %in% "application/vnd.google.protobuf"){
+      res <- do.call(fn, msg2data(request$body, fn.meta$input))
+      if (!is.null(res) && !is.null(fn.meta$output) && length(unlist(res))>0) {
+        msg <- data2msg(res, fn.meta$output)
+        for (url in runtime$output_url)
+          send.msg(url, msg)
+        if (isTRUE(runtime$data_response)){
+          if(request$accept %in% "application/vnd.google.protobuf"){
             response$set_body(msg)
-            response$set_content_type("application/octet-stream")
+            response$set_content_type("application/vnd.google.protobuf")
+            return(response)
+          }else{
+            response$set_body(res)
+            response$set_content_type("application/json")
             return(response)
           }
         }
-        list("OK", "text/plain")
-      },
-      "application/json" = {
-        res <- do.call(fn, request$body)
-        response$set_body(res)
-        response$set_content_type("application/json")
+      }else{
+        response$set_status_code(500L)
+        response$set_body("Unable to compute. Please verify the arguments.")
         return(response)
       }
-    )
-  }, error=function(e) paste("ERROR: in execution: ", as.character(e)))
+    }else{
+      if(is.null(names(request$body)) && length(request$body)==1){ # string
+        dat<-jsonlite::fromJSON(request$body)
+      }else{ # list (from json)
+        dat<-request$body
+      }
+      res <- do.call(fn, dat)
+      if(!is.null(res) && length(unlist(res))>0){
+        if(request$accept %in% "application/vnd.google.protobuf"){
+          msg<-data2msg(res, fn.meta$output)
+          response$set_body(msg)
+          response$set_content_type("application/vnd.google.protobuf")
+          return(response)
+        }else{
+          response$set_body(res)
+          response$set_content_type("application/json")
+          return(response)
+        }
+      }
+    }
+  }, error=function(e){
+    paste("ERROR: in execution: ", as.character(e))
+    response$set_status_code(500L)
+    response$set_body("Unable to compute. Please verify the arguments.")
+    return(response)
+  })
 }
 
 auth <- function(url, user, password) {

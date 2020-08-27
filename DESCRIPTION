@@ -6,6 +6,6 @@ Authors@R: c(person("Simon", "Urbanek", role = c("aut", "cre"), email = "urbanek
 Maintainer: Simon Urbanek <urbanek@research.att.com>
 Description: Functions to create and run Acumos models.
 License: Apache License (== 2.0)
-Imports: httr, jsonlite, RProtoBuf, Rserve, RestRserve
+Imports: httr, jsonlite, RProtoBuf, Rserve, RestRserve, yaml
 Suggests: randomForest
 RoxygenNote: 7.0.2
