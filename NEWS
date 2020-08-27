@@ -1,6 +1,12 @@
  NEWS
 ======
+0.4-0
+    o	with `compose()`, generate a new file, `component.swagger.yaml`, that 
+    describes the component API using swagger 2.0.
 
+    o	serve a swagger UI at the path `/` and the swagger YAML description 
+    file at the path `/swagger.yaml`, using `RestRserve`.
+    
 0.3-0
     o	add `composeFromSource()` and `pushFromSource()` functions, enabling 
     respectively to compose and to push a bundle from an R file (considered 

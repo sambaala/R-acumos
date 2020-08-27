@@ -2,13 +2,13 @@
 
 ## Install
 
-The easy way (recommended):
+This under development version:
 
-    install.packages("acumos", repos=c("http://cloud.r-project.org","http://rforge.net"), dep=T)
+    devtools::install_github("sambaala/R-acumos")
 
-Alternatively, to install from sources: you have to install all dependent packages from CRAN first then
+or (you have to install all dependent packages from CRAN first):
 
-    git clone git@github.com:att/R-acumos.git acumos
+    git clone git@github.com:sambaala/R-acumos.git acumos
     R CMD build acumos
     R CMD INSTALL acumos_*.tar.gz
 
@@ -18,11 +18,17 @@ Alternatively, to install from sources: you have to install all dependent packag
 
 To create a deployment component, use `acumos::compose()` with the functions to expose. If type specs are not defined, they default to `c(x="character")`.
 
-The component consists of a bundle `component.amc` which is a ZIP file with `meta.json` defining the component and its metadata, `component.bin` the binary payload and `component.proto` with the protobuf specs.
+The component consists of a bundle `component.amc` which is a ZIP file with `meta.json` defining the component and its metadata, `component.bin` the binary payload and `component.proto` with the protobuf specs and `component.swagger.yaml` with the Swagger API 
+definition.
 
-Please consult R documentation page for details, i.e., use `?compose` in R or see
+Please consult R documentation page for details, i.e., use `?compose` in R.
 
-https://rforge.net/doc/packages/acumos/compose.html
+Example:
+
+    library(randomForest)
+    compose(predict=function(..., inputs=lapply(iris[-5], class)) as.character(predict(rf, as.data.frame(list(...)))),
+        aux = list(rf = randomForest(Species ~ ., data=iris)),
+        name="Random Forest")
 
 ### Deploy a component
 
@@ -38,6 +44,4 @@ The `run()` function can be configured to set the component directory and/or loc
 
     R -e 'acumos:::run(runtime=list(input_port=8100, output_url="http://127.0.0.1:8101/predict"))'
 
-See also `?run` in R or
-
-https://rforge.net/doc/packages/acumos/run.html
+See also `?run` in R.
