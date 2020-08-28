@@ -1,3 +1,4 @@
+## Copyright (C) 2017 AT&T
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ## you may not use this file except in compliance with the License.
 ## You may obtain a copy of the License at
@@ -123,11 +124,8 @@ protoDefine <- function(name, types) {
          "\n}\n")
 }
 
-protoDefine <- function(name, types) {
-  paste0("message ", name, " {\n",
-         paste0("\trepeated ", type2proto(types), " ", pQ(names(types)), " = ", seq.int(types), ";", collapse="\n"),
-         "\n}\n")
-}
+protoService <- function(name, inputType = paste0(name, "Input"), outputType = paste0(name, "Output"))
+  paste0("service ", name, "_service {\n\trpc ", name, " (", inputType, ") returns (", outputType, ");\n}\n\n")
 
 .dinfo <- function(level, ..., exp) {
   cd <- Sys.getenv("ACUMOS_DEBUG")
