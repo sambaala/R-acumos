@@ -26,9 +26,10 @@ definition.
 Please consult R documentation page for details, i.e., use `?compose` in R.
 
 Example:
-
-    library(acumos)
+    
+    install.packages("randomForest")
     library(randomForest)
+    library(acumos)
     compose(predict=function(..., inputs=lapply(iris[-5], class)) as.character(predict(rf, as.data.frame(list(...)))),
         aux = list(rf = randomForest(Species ~ ., data=iris)),
         name="Random Forest",
