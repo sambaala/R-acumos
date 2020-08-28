@@ -124,7 +124,7 @@ swaggerYaml<-function(predict, transform, fit, name, componentVersion){
     runtimeError=list(
       type="object",
       properties=list(
-        erros=list(
+        error=list(
           type="string"
         ),
         code=list(
