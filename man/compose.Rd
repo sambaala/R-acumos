@@ -39,7 +39,7 @@ compose(predict, transform, fit, generate, service, initialize,
   function with the signature
   \code{function(path, query, body, headers)} where \code{body} is
   \code{NULL} or a raw vector. This interface is experimental and
-  currently not part of the offical API.
+  currently not part of the official API.
 
   The functions can have two special arguments \code{inputs} and
   \code{output} which are used to define the types of the input and

@@ -60,7 +60,7 @@ send.msg(url, payload, response=FALSE)
 
   \code{data2msg} returns a raw vector constituting the message
 
-  \code{msg2data} returns the data repesented by the message
+  \code{msg2data} returns the data represented by the message
 
   \code{send.msg} returns \code{TRUE} on success, \code{FALSE} otherwise
   unless \code{response} is \code{TRUE} in which case the full response
@@ -76,7 +76,7 @@ send.msg(url, payload, response=FALSE)
   using \code{RProtoBuf::readProtoFiles(proto)}.
 
   The \code{run()} function can be used only once in a session, because
-  protobuf definitions are global and cannot be overriden without a
+  protobuf definitions are global and cannot be overridden without a
   conflict.
 
   The internal Acumos communication protocol is subject to change and
@@ -85,7 +85,7 @@ send.msg(url, payload, response=FALSE)
   If the \code{runtime} list contains an entry \code{data_response=TRUE}
   then the component also returns the result in the response body (in
   addition to any output URL specifications). In all other cases the
-  respose is always \code{"OK"} on success and error string on error.
+  response is always \code{"OK"} on success and error string on error.
 }
 \seealso{
 \code{\link{compose}}

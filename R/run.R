@@ -308,6 +308,9 @@ req_handler <- function(request,response){ #path, query, body, headers) {
         }
       }
     }
+    response$set_body("OK")
+    response$set_content_type("text/plain")
+    return(response)
   }, error=function(e){
     paste("ERROR: in execution: ", as.character(e))
     response$set_status_code(500L)
