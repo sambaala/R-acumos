@@ -12,7 +12,7 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 #
-#' Generate swagger json from defined functions
+# Generate swagger json from defined functions
 swaggerYaml<-function(predict, transform, fit, name, componentVersion){
   pathlist<-list()
   deflist<-list()
