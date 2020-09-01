@@ -8,7 +8,8 @@
 }
 \usage{
 compose(predict, transform, fit, generate, service, initialize,
-        aux = list(), name = "R Component", file = "component.amc")
+        aux = list(), name = "R Component", componentVersion="unknown version", 
+        file = "component.amc")
 }
 \arguments{
   \item{predict}{predict function (optional)}
@@ -22,6 +23,7 @@ compose(predict, transform, fit, generate, service, initialize,
   \item{aux}{list of any auxiliary objects that are to be passed to the
   global workspace of the component.}
   \item{name}{string, name of the component}
+  \item{componentVersion}{string, version of the component}
   \item{file}{string, filename for the resulting component file}
 }
 \details{
@@ -73,11 +75,14 @@ Simon Urbanek
 compose(transform=identity, name="identity")
 
 ## simple addition
-compose(transform=function(a, b, inputs=c(a="numeric", b="numeric"), outputs=c(x="numeric")) a + b, name="Addition")
+compose(transform=function(a, b, inputs=c(a="numeric", b="numeric"), 
+        outputs=c(x="numeric")) a + b, name="Addition")
 
 ## silly RF trained on Iris
 library(randomForest)
-compose(predict=function(..., inputs=lapply(iris[-5], class)) as.character(predict(rf, as.data.frame(list(...)))),
+compose(predict=function(..., inputs=lapply(iris[-5], class)){
+                    as.character(predict(rf, as.data.frame(list(...))))
+                },
         aux = list(rf = randomForest(Species ~ ., data=iris)),
         name="Random Forest")
 

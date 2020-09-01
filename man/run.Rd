@@ -103,19 +103,23 @@ send.msg(url, payload, response=FALSE)
 
   ## compose a simple RF component and run it
   library(randomForest)
-  compose(predict=function(..., inputs=lapply(iris[-5], class)) print(as.character(predict(rf, as.data.frame(list(...))))),
+  compose(predict=function(..., inputs=lapply(iris[-5], class)){
+                      print(as.character(predict(rf, as.data.frame(list(...)))))
+                  },
           aux = list(rf = randomForest(Species ~ ., data=iris)),
           name="Random Forest")
-  p <- parallel::mcparallel(acumos:::run(runtime=list(input_port=8101)))
-
-  Sys.sleep(.5) ## wait a bit for the server to start
-
-  ## run the generator component to feed the above
-  acumos:::run(file="generator.amc", runtime=list(output_url="http://127.0.0.1:8101/predict"))
-
-  ## shut down the RF component
-  parallel:::mckill(p)
-  parallel:::mccollect(p)
-  parallel:::mccollect(p)
+  \dontrun{
+    p <- callr::r_bg(function(){acumos:::run(runtime=list(input_port=8101))})
+  
+    Sys.sleep(.5) ## wait a bit for the server to start
+  
+    ## run the generator component to feed the above
+    acumos:::run(file="generator.amc", runtime=list(output_url="http://127.0.0.1:8101/predict"))
+  
+    ## shut down the RF component
+    head(p$read_output_lines())
+    p$interrupt()
+    p$kill()
+  }
 }
 \keyword{interface}

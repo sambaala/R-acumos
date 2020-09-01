@@ -137,6 +137,6 @@ runFromSource<-function(file="acumos.R",where=getwd(),
   # compose
   composeFromSource(file=file, outputfile = file.path(dir,"acumos-app.zip"), addSource=F)
   # run
-  acumos:::run(file=file.path(dir,"acumos-app.zip"),
+  run(file=file.path(dir,"acumos-app.zip"),
                runtime=runtime, init.only=init.only, where=where)
 }
