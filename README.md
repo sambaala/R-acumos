@@ -48,7 +48,7 @@ they will also correspond to the other function type arguments of `compose()`, n
 
     acumos::composeFromSource(file = "path/to/your/R/script/acumos.R",
         name = "MyComponentName",
-        outputfile = "component.zip",
+        outputfile = "component.amc",
         addSource = TRUE)
 
 The `addSource` parameter is a boolean that allows you to add the R source code (*component.R*) in your model bundle.
@@ -81,7 +81,7 @@ Once the model bundle is created, you can use the `push()` API client to on-boar
 (Command Line Interface) on-boarding. An example R command is the following:
 
     acumos::push(url = "https://<hostname>/onboarding-app/v2/models",
-        file = "component.zip",
+        file = "component.amc",
         token = "<username>:<token>",
         create = FALSE,
         license = "path/to/your/license.json")
@@ -89,7 +89,7 @@ Once the model bundle is created, you can use the `push()` API client to on-boar
 `url`: can be found in the ON-BOARDING MODEL page of your Acumos portal and looks like :
 `<hostname>/onboarding-app/v2/models`
 
-`file`: component.zip (your model bundle)
+`file`: component.amc (your model bundle)
 
 `username` : your Acumos username
 
